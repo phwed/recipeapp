@@ -1,110 +1,100 @@
 import React from "react";
 import {
-  Center,
-  useColorMode,
-  Tooltip,
-  IconButton,
-  SunIcon,
-  MoonIcon,
-  Image,
-  HStack,
-  Text,
-  Heading,
   Box,
-  Link,
-  VStack,
+  Text,
+  HStack,
+  Heading,
   Button,
-  AspectRatio,
+  Center,
+  FlatList,
+  Image as Img,
+  Hidden,
+  Pressable,
 } from "native-base";
+import Link from "next/link";
+import Image from "next/image";
+import food from "../public/food.png";
+
+import { sanityClient, urlFor, usePreviewSubscription } from "../lib/sanity";
+
+const recipesQuery = `*[_type == "recipe"]{
+  _id,
+  name,
+  slug,
+  mainImage
+}`;
 
 // Start editing here, save and see your changes.
-export default function App() {
+export default function App({ data }) {
+  console.log(data);
+
   return (
-    <Center
-      flex={1}
-      _dark={{ bg: "blueGray.900" }}
-      _light={{ bg: "blueGray.50" }}
-    >
-      <VStack alignItems="center" space="md">
-        <HStack alignItems="center" space="2xl">
-          <AspectRatio w={24} ratio={1.66}>
-            <Image
-              source={{ uri: "images/nextjs-logo.png" }}
-              alt="NextJS Logo"
-              resizeMode="contain"
-            />
-          </AspectRatio>
-          <Text fontSize="4xl">+</Text>
-          <Image
-            source={{ uri: "images/nativebase-logo.svg" }}
-            alt="NativeBase Logo"
-            size={24}
-            resizeMode="contain"
-          />
-        </HStack>
-        <Heading>Welcome to NativeBase</Heading>
-        <Text>
-          Edit{" "}
-          <Box
-            _text={{
-              fontFamily: "monospace",
-              fontSize: "sm",
-            }}
-            px={2}
-            py={1}
-            _dark={{ bg: "blueGray.800" }}
-            _light={{ bg: "blueGray.200" }}
-          >
-            src/pages/index.js
-          </Box>{" "}
-          and save to reload.
+    <Box flex={1} bg="green.100">
+      <Center
+        mx={10}
+        px={5}
+        bg="green.600"
+        borderBottomLeftRadius={50}
+        borderBottomRightRadius={50}
+      >
+        <Box h="40vh" w="100%">
+          <Image src={food} alt="Picture of the author" objectFit="contain" />
+        </Box>
+
+        <Heading color="white" fontWeight={"extraBlack"} fontSize="4xl">
+          JOSIES KITCHEN
+        </Heading>
+        <Text mb={4} color="white" fontWeight={"bold"}>
+          food for the culture
         </Text>
-        <HStack alignItems="center" space="sm">
-          <Link href="https://nextjs.org/docs/getting-started" isExternal>
-            <Text
-              _light={{ color: "gray.700" }}
-              _dark={{ color: "gray.400" }}
-              underline
-              fontSize={"xl"}
-            >
-              Learn NextJS
-            </Text>
-          </Link>
-          <Text>/</Text>
-          <Link href="https://docs.nativebase.io" isExternal>
-            <Text color="primary.500" underline fontSize={"xl"}>
-              Learn NativeBase
-            </Text>
-          </Link>
+      </Center>
+
+      <Box mx={10} bg="green.100" pt={100} top={-50} zIndex={-10} rounded="md">
+        <HStack px={10} pb={10} flex={1} alignItems="center" space={10}>
+          <Center flex={1}>
+            <FlatList
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              data={data}
+              keyExtractor={(item) => item._id}
+              ItemSeparatorComponent={() => (
+                <Box width={10} height={5} bg="green.100" />
+              )}
+              renderItem={({ item }) => (
+                <Pressable>
+                  <Link href={`recipes/${item.slug}`}>
+                    <Center
+                      px={10}
+                      py={5}
+                      bg="emerald.600"
+                      borderRadius={10}
+                      overflow="hidden"
+                    >
+                      <Img source={urlFor(item.mainImage).url()} size="xl" />
+
+                      <Box mt={2}>
+                        <Text fontSize="lg" fontWeight={"bold"} color="white">
+                          {item.name}
+                        </Text>
+                      </Box>
+                    </Center>
+                  </Link>
+                </Pressable>
+              )}
+            />
+          </Center>
         </HStack>
-      </VStack>
-      <ColorModeSwitch />
-      <Link mt="6" href="https://docs.nativebase.io" isExternal>
-        <Button variant="outline" colorScheme="coolGray">
-          View Repo
-        </Button>
-      </Link>
-    </Center>
+      </Box>
+    </Box>
   );
 }
-// Color Switch Component
-function ColorModeSwitch() {
-  const { colorMode, toggleColorMode } = useColorMode();
-  return (
-    <Tooltip
-      label={colorMode === "dark" ? "Enable light mode" : "Enable dark mode"}
-      placement="bottom right"
-      openDelay={300}
-      closeOnClick={false}
-    >
-      <IconButton
-        position="absolute"
-        top={12}
-        right={8}
-        onPress={toggleColorMode}
-        icon={colorMode === "dark" ? <SunIcon /> : <MoonIcon />}
-        accessibilityLabel="Color Mode Switch"
-      />
-    </Tooltip>
-  );
+
+export async function getStaticProps() {
+  const recipes = await sanityClient.fetch(recipesQuery);
+
+  return {
+    props: {
+      data: recipes,
+    },
+  };
 }
